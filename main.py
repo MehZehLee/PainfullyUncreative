@@ -51,6 +51,7 @@ class TaskCommands(commands.Cog):
 
     # /viewalltasks
     @app_commands.command(name='viewalltasks', description='View all tasks')
+    @commands.has_permissions(manage_guild=True)
     async def view_all_tasks(self, interaction: discord.Interaction):
         async with aiohttp.ClientSession() as session:
             async with session.get("http://localhost:8000/gettasks") as response:
