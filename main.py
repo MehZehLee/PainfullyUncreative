@@ -36,6 +36,7 @@ class TaskCommands(commands.Cog):
                 await interaction.response.send_message(f"Invalid priority. Please enter 'Low', 'Medium', or 'High'.")
                 return
 
+            # Send a POST request to the API to create the task
             async with session.post("http://localhost:8000/createtask", json=json_data) as response:
                 if response.status == 200:
                     await interaction.response.send_message(f"Task created successfully!")
@@ -50,8 +51,15 @@ class TaskCommands(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"http://localhost:8000/gettasks/{interaction.user.id}") as response:
                 if response.status == 200:
+
+                    # Get the tasks for the user as a json object
                     tasks = await response.json()
+
+                    # Create a string of the tasks to send to the user
+                    # ex: "1: Task Name - Description - Open
                     task_list = "\n".join([f"{task['task_id']}: {task['title']} - {task['description']} - {task['status']}" for task in tasks])
+
+                    # If no tasks are found, send a message saying No tasks found.
                     if task_list == "":
                         task_list = "No tasks found."
                     await interaction.response.send_message(f"**Your Tasks:**\n**ID | Title | Description | Status**\n{task_list}")
@@ -67,8 +75,14 @@ class TaskCommands(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get("http://localhost:8000/gettasks") as response:
                 if response.status == 200:
+
+                    # Get the tasks for the bot as a json object
                     tasks = await response.json()
+
+                    # Create a string of the tasks to send to the user
                     task_list = "\n".join([f"{task['task_id']}: {task['title']} - {task['description']} - {task['status']}" for task in tasks])
+
+                    # If no tasks are found, send a message saying No tasks found.
                     if task_list == "":
                         task_list = "No tasks found."
                     await interaction.response.send_message(f"**All Tasks:**\n**ID | Title | Description | Status**\n{task_list}")
@@ -93,10 +107,16 @@ class TaskCommands(commands.Cog):
     @app_commands.command(name='updatestatus', description='Update the status of a task')
     async def update_status(self, interaction: discord.Interaction, task_id: int, status: str):
         async with aiohttp.ClientSession() as session:
+
+            # Check if status is Open, In Progress, or Completed
             if (status != "Open" and status != "In Progress" and status != "Completed"):
                 await interaction.response.send_message(f"Invalid status. Please enter 'Open', 'In Progress', or 'Completed'.")
                 return
+            
+            # Create a dictionary with the status to update
             data = {'status': status}
+
+            # Send a PATCH request to the API to update the task status
             async with session.patch(f"http://localhost:8000/updatetask/{task_id}", json=data) as response:
                 if response.status == 200:
                     await interaction.response.send_message(f"Task #{task_id} status updated to {status}!")
@@ -108,6 +128,7 @@ class TaskCommands(commands.Cog):
     @app_commands.command(name='deletetask', description='Delete a task')
     async def delete_task(self, interaction: discord.Interaction, task_id: int):
         async with aiohttp.ClientSession() as session:
+            # Send a DELETE request to the API to delete the task
             async with session.delete(f"http://localhost:8000/deletetask/{task_id}") as response:
                 if response.status == 200:
                     await interaction.response.send_message(f"Task #{task_id} deleted successfully!")

@@ -4,6 +4,7 @@ from datetime import datetime
 
 Base = declarative_base()
 
+# Task database model
 class Task(Base):
     __tablename__ = 'Tasks'
     task_id = Column(Integer, primary_key=True)
