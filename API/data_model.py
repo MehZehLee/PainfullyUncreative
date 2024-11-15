@@ -11,6 +11,7 @@ class Task(Base):
     title = Column(Text, nullable=False)
     description = Column(Text)
     status = Column(String, default='Open')
+    priority = Column(String, default='Medium')
     created_at = Column(DateTime, default=datetime.utcnow)
     due_date = Column(DateTime, nullable=True)
     updated_at = Column(DateTime, default=datetime.utcnow)

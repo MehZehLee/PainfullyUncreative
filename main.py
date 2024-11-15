@@ -15,21 +15,31 @@ class TaskCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    # /createtask <title> <description> <due_date>
+    # /createtask <title> <description> <priority> <due_date>
     @app_commands.command(name='createtask', description='Create a new task')
-    async def create_task(self, interaction: discord.Interaction, title: str, description: str = None, due_date: str = None):
+    async def create_task(self, interaction: discord.Interaction, title: str, description: str = None, priority: str = None, due_date: str = None):
         async with aiohttp.ClientSession() as session:
             json_data = {'user_id': interaction.user.id,
                         'title': title,
-                        'description': description}
+                        'description': description,
+                        'priority': priority}
             
+            # Default due_date to None if not specified
             if due_date is not None:
                 json_data['due_date'] = due_date
+
+            # Default priority to Medium if not specified
+            if priority is None:
+                json_data['priority'] = "Medium"
+            # Check if priority is valid (Low, Medium, High)
+            elif priority != "Low" and priority != "Medium" and priority != "High":
+                await interaction.response.send_message(f"Invalid priority. Please enter 'Low', 'Medium', or 'High'.")
+                return
 
             async with session.post("http://localhost:8000/createtask", json=json_data) as response:
                 if response.status == 200:
                     await interaction.response.send_message(f"Task created successfully!")
-                    await interaction.followup.send(f"Title: {title}\nDescription: {description}\nDue Date: {due_date}")
+                    await interaction.followup.send(f"Title: {title}\nDescription: {description}\nPriority: {priority}\nDue Date: {due_date}")
                 else:
                     await interaction.response.send_message(f"Error creating task.")
                     print(await response.text())
@@ -50,6 +60,7 @@ class TaskCommands(commands.Cog):
                     print(await response.text())
 
     # /viewalltasks
+    # Manage Server permission required
     @app_commands.command(name='viewalltasks', description='View all tasks')
     @commands.has_permissions(manage_guild=True)
     async def view_all_tasks(self, interaction: discord.Interaction):
@@ -75,6 +86,22 @@ class TaskCommands(commands.Cog):
                     await interaction.response.send_message(f"Task #{task_id} updated successfully!")
                 else:
                     await interaction.response.send_message(f"Error updating task.")
+                    print(await response.text())
+
+    # /updatestatus <task_id> <status>
+    # Only allows statuses of "Open", "In Progress", or "Complete"
+    @app_commands.command(name='updatestatus', description='Update the status of a task')
+    async def update_status(self, interaction: discord.Interaction, task_id: int, status: str):
+        async with aiohttp.ClientSession() as session:
+            if (status != "Open" and status != "In Progress" and status != "Completed"):
+                await interaction.response.send_message(f"Invalid status. Please enter 'Open', 'In Progress', or 'Completed'.")
+                return
+            data = {'status': status}
+            async with session.patch(f"http://localhost:8000/updatetask/{task_id}", json=data) as response:
+                if response.status == 200:
+                    await interaction.response.send_message(f"Task #{task_id} status updated to {status}!")
+                else:
+                    await interaction.response.send_message(f"Error updating task status.")
                     print(await response.text())
 
     # /deletetask <task_id>

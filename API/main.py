@@ -25,6 +25,7 @@ class TaskCreate(BaseModel):
     title: str
     description: Optional[str] = None
     status: str = "Open"
+    priority: str = "Medium"
     due_date: Optional[datetime] = None
 
 # Pydantic model for updating a task
@@ -32,6 +33,7 @@ class TaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
     status: Optional[str] = None
+    priority: Optional[str] = None
     due_date: Optional[datetime] = None
 
 # Create task
@@ -44,6 +46,7 @@ async def create_task(task: TaskCreate):
             title=task.title,
             description=task.description,
             status=task.status,
+            priority=task.priority,
             due_date=task.due_date
         )
         session.add(new_task)
@@ -73,6 +76,26 @@ async def update_task(task: TaskUpdate, task_id: int):
         
         session.commit()
         return {"message": "Task updated successfully"}
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+    
+# Update task status
+# /updatetaskstatus/{task_id}
+# Status can be "Open", "In Progress", or "Completed"
+@app.patch("/updatetaskstatus/{task_id}")
+async def update_task_status(status: str, task_id: int):
+    try:
+        task_to_update = session.query(Task).filter(Task.task_id == task_id).first()
+        if not task_to_update:
+            raise HTTPException(status_code=404, detail="Task not found")
+        
+        if status not in ["Open", "In Progress", "Completed"]:
+            raise HTTPException(status_code=400, detail="Invalid status")
+
+        task_to_update.status = status
+        session.commit()
+        return {"message": "Task status updated successfully"}
     except Exception as e:
         session.rollback()
         raise HTTPException(status_code=400, detail=str(e))
