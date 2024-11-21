@@ -1,3 +1,4 @@
 .env
 *.spc
 API/tasks.db
+API/__pycache__
