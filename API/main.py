@@ -26,7 +26,7 @@ class TaskCreate(BaseModel):
     description: Optional[str] = None
     status: str = "Open" # Default to Open status if not specified
     priority: str = "Medium" # Default to Medium priority if not specified
-    due_date: Optional[datetime] = None
+    due_date: Optional[dict] = None
 
 # Pydantic model for updating a task
 class TaskUpdate(BaseModel):
@@ -34,7 +34,7 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     status: Optional[str] = None
     priority: Optional[str] = None
-    due_date: Optional[datetime] = None
+    due_date: Optional[dict] = None
 
 # Create task
 # /createtask
@@ -48,7 +48,7 @@ async def create_task(task: TaskCreate):
             description=task.description,
             status=task.status,
             priority=task.priority,
-            due_date=task.due_date
+            due_date=datetime(task.due_date["year"], task.due_date["month"], task.due_date["day"])
         )
 
         # Add the task object to the session and commit the changes
@@ -76,7 +76,7 @@ async def update_task(task: TaskUpdate, task_id: int):
         if task.status is not None:
             task_to_update.status = task.status
         if task.due_date is not None:
-            task_to_update.due_date = task.due_date
+            task_to_update.due_date = datetime(task.due_date["year"], task.due_date["month"], task.due_date["day"])
         
         session.commit()
         return {"message": "Task updated successfully"}

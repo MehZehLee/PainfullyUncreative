@@ -4,9 +4,11 @@ from dotenv import load_dotenv
 from discord import app_commands
 from discord.ext import commands
 import aiohttp
+import re
+from datetime import datetime
 
 intents = discord.Intents.default() 
-intents.message_content = True 
+intents.message_content = True  
 
 bot = commands.Bot(command_prefix='/', intents=intents)
 tree = bot.tree
@@ -26,7 +28,8 @@ class TaskCommands(commands.Cog):
             
             # Default due_date to None if not specified
             if due_date is not None:
-                json_data['due_date'] = due_date
+                due_date_dict = await parse_date(due_date)
+                json_data['due_date'] = due_date_dict
 
             # Default priority to Medium if not specified
             if priority is None:
@@ -94,7 +97,8 @@ class TaskCommands(commands.Cog):
     @app_commands.command(name='updatetask', description='Update an existing task')
     async def update_task(self, interaction: discord.Interaction, task_id: int, title: str = None, description: str = None, due_date: str = None, status: str = None):
         async with aiohttp.ClientSession() as session:
-            data = {'title': title, 'description': description, 'due_date': due_date, 'status': status}
+            due_date_dict = await parse_date(due_date)
+            data = {'title': title, 'description': description, 'due_date': due_date_dict, 'status': status}
             async with session.patch(f"http://localhost:8000/updatetask/{task_id}", json=data) as response:
                 if response.status == 200:
                     await interaction.response.send_message(f"Task #{task_id} updated successfully!")
@@ -146,6 +150,16 @@ async def on_ready():
     print(f'Logged in as {bot.user.name}')
     print(f'Bot ID: {bot.user.id}')
     print('------')
+
+#returns a dictionary containing the month, day, and year when given a date (MM/DD/YYYY, MM-DD-YYYY)
+async def parse_date(date: str):
+    dates = re.split("/|-", date)
+    date_dict = {"month": int(dates[0]),
+                 "day": int(dates[1]),
+                 "year": int(dates[2])}
+    return date_dict
+    
+    
 
 # Load environment variables and run the bot
 load_dotenv()
