@@ -48,59 +48,50 @@ class TaskCommands(commands.Cog):
                     await interaction.response.send_message(f"Error creating task.")
                     print(await response.text())
 
+    # /viewtasks
+    # View all tasks for the user
     @app_commands.command(name='viewtasks', description='View your tasks')
     async def view_tasks(self, interaction: discord.Interaction):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"http://localhost:8000/gettasks/{interaction.user.id}") as response:
                 if response.status == 200:
-                    # Get the tasks for the user as a JSON object
                     tasks = await response.json()
-
-                    # If no tasks are found, send a message saying No tasks found.
                     if not tasks:
                         await interaction.response.send_message("No tasks found.")
                         return
-
-                    # Create a formatted table for the tasks
-                    table_header = f"{'ID':<5} {'Title':<20} {'Description':<30} {'Priority':<10} {'Status':<10}\n"
-                    table_body = "\n".join(
-                        f"{task['task_id']:<5} {task['title']:<20} {task['description']:<30} {task['priority']:<10} {task['status']:<10}"
-                        for task in tasks
-                    )
-
-                    # Wrap the table in a code block for Discord
-                    formatted_table = f"```{table_header}{'-' * len(table_header)}\n{table_body}```"
-
-                    await interaction.response.send_message(f"**Your Tasks:**\n{formatted_table}")
+                    
+                    embed = discord.Embed(title="Your Tasks", color=discord.Color.blue())
+                    for task in tasks:
+                        if task['due_date']:
+                            task['due_date'] = datetime.strptime(task['due_date'].split('T')[0], '%Y-%m-%d').strftime('%m/%d/%Y')
+                        embed.add_field(name=f"Task ID: {task['task_id']}", value=f"**Title:** {task['title']}\n**Description:** {task['description']}\n**Priority:** {task['priority']}\n**Status:** {task['status']}\n**Due Date:** {task['due_date'] if task['due_date'] else 'None'}", inline=False)
+                    
+                    await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message("Error retrieving tasks.")
                     print(await response.text())
 
+    # /viewalltasks
+    # View all tasks in the database
+    # Requires Manage Server permission
     @app_commands.command(name='viewalltasks', description='View all tasks')
     @commands.has_permissions(manage_guild=True)
     async def view_all_tasks(self, interaction: discord.Interaction):
         async with aiohttp.ClientSession() as session:
             async with session.get("http://localhost:8000/gettasks") as response:
                 if response.status == 200:
-                    # Get the tasks for the bot as a JSON object
                     tasks = await response.json()
-
-                    # If no tasks are found, send a message saying No tasks found.
                     if not tasks:
                         await interaction.response.send_message("No tasks found.")
                         return
-
-                    # Create a formatted table for the tasks
-                    table_header = f"{'ID':<5} {'Title':<20} {'Description':<30} {'Priority':<10} {'Status':<10}\n"
-                    table_body = "\n".join(
-                        f"{task['task_id']:<5} {task['title']:<20} {task['description']:<30} {task['priority']:<10} {task['status']:<10}"
-                        for task in tasks
-                    )
-
-                    # Wrap the table in a code block for Discord
-                    formatted_table = f"```{table_header}{'-' * len(table_header)}\n{table_body}```"
-
-                    await interaction.response.send_message(f"**All Tasks:**\n{formatted_table}")
+                    
+                    embed = discord.Embed(title="All Tasks", color=discord.Color.green())
+                    for task in tasks:
+                        if task['due_date']:
+                            task['due_date'] = datetime.strptime(task['due_date'].split('T')[0], '%Y-%m-%d').strftime('%m/%d/%Y')
+                        embed.add_field(name=f"Task ID: {task['task_id']}", value=f"**Title:** {task['title']}\n**Description:** {task['description']}\n**Priority:** {task['priority']}\n**Status:** {task['status']}\n**Due Date:** {task['due_date'] if task['due_date'] else 'None'}", inline=False)
+                    
+                    await interaction.response.send_message(embed=embed)
                 else:
                     await interaction.response.send_message("Error retrieving tasks.")
                     print(await response.text())

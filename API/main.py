@@ -48,8 +48,7 @@ async def create_task(task: TaskCreate):
             description=task.description,
             status=task.status,
             priority=task.priority,
-            due_date=datetime(task.due_date["year"], task.due_date["month"], task.due_date["day"])
-        )
+            due_date=datetime(task.due_date["year"], task.due_date["month"], task.due_date["day"]) if task.due_date else None        )
 
         # Add the task object to the session and commit the changes
         session.add(new_task)
