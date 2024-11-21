@@ -21,6 +21,7 @@ class TaskCommands(commands.Cog):
     @app_commands.command(name='createtask', description='Create a new task')
     async def create_task(self, interaction: discord.Interaction, title: str, description: str = None, priority: str = None, due_date: str = None):
         async with aiohttp.ClientSession() as session:
+            # Create a dictionary with the task data
             json_data = {'user_id': interaction.user.id,
                         'title': title,
                         'description': description,
@@ -43,7 +44,6 @@ class TaskCommands(commands.Cog):
             async with session.post("http://localhost:8000/createtask", json=json_data) as response:
                 if response.status == 200:
                     await interaction.response.send_message(f"Task created successfully!")
-                    # await interaction.followup.send(f"Title: {title}\nDescription: {description}\nPriority: {priority}\nDue Date: {due_date}")
                     embed = discord.Embed(title="Task Created", color=discord.Color.green())
                     embed.add_field(name="Title", value=title, inline=False)
                     embed.add_field(name="Description", value=description if description else "None", inline=False)
@@ -62,11 +62,14 @@ class TaskCommands(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"http://localhost:8000/gettasks/{interaction.user.id}") as response:
                 if response.status == 200:
+
+                    # Get the tasks from the response
                     tasks = await response.json()
                     if not tasks:
                         await interaction.response.send_message("No tasks found.")
                         return
                     
+                    # Create an embed to display the tasks
                     embed = discord.Embed(title="Your Tasks", color=discord.Color.blue())
                     for task in tasks:
                         if task['due_date']:
@@ -87,11 +90,14 @@ class TaskCommands(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get("http://localhost:8000/gettasks") as response:
                 if response.status == 200:
+
+                    # Get the tasks from the response
                     tasks = await response.json()
                     if not tasks:
                         await interaction.response.send_message("No tasks found.")
                         return
                     
+                    # Create an embed to display the tasks
                     embed = discord.Embed(title="All Tasks", color=discord.Color.green())
                     for task in tasks:
                         if task['due_date']:
@@ -169,8 +175,6 @@ async def parse_date(date: str):
                  "year": int(dates[2])}
     return date_dict
     
-    
-
 # Load environment variables and run the bot
 load_dotenv()
 token = os.getenv('TOKEN')
