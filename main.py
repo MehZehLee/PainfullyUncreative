@@ -43,7 +43,14 @@ class TaskCommands(commands.Cog):
             async with session.post("http://localhost:8000/createtask", json=json_data) as response:
                 if response.status == 200:
                     await interaction.response.send_message(f"Task created successfully!")
-                    await interaction.followup.send(f"Title: {title}\nDescription: {description}\nPriority: {priority}\nDue Date: {due_date}")
+                    # await interaction.followup.send(f"Title: {title}\nDescription: {description}\nPriority: {priority}\nDue Date: {due_date}")
+                    embed = discord.Embed(title="Task Created", color=discord.Color.green())
+                    embed.add_field(name="Title", value=title, inline=False)
+                    embed.add_field(name="Description", value=description if description else "None", inline=False)
+                    embed.add_field(name="Priority", value=priority, inline=False)
+                    embed.add_field(name="Due Date", value=due_date if due_date else "None", inline=False)
+                    
+                    await interaction.followup.send(embed=embed)
                 else:
                     await interaction.response.send_message(f"Error creating task.")
                     print(await response.text())

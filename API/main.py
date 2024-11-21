@@ -48,8 +48,8 @@ async def create_task(task: TaskCreate):
             description=task.description,
             status=task.status,
             priority=task.priority,
-            due_date=datetime(task.due_date["year"], task.due_date["month"], task.due_date["day"]) if task.due_date else None        )
-
+            due_date=datetime(task.due_date["year"], task.due_date["month"], task.due_date["day"]) if task.due_date else None
+        )
         # Add the task object to the session and commit the changes
         session.add(new_task)
         session.commit()
@@ -75,7 +75,7 @@ async def update_task(task: TaskUpdate, task_id: int):
         if task.status is not None:
             task_to_update.status = task.status
         if task.due_date is not None:
-            task_to_update.due_date = datetime(task.due_date["year"], task.due_date["month"], task.due_date["day"])
+            task_to_update.due_date = datetime(task.due_date["year"], task.due_date["month"], task.due_date["day"]) if task.due_date else None
         
         session.commit()
         return {"message": "Task updated successfully"}
