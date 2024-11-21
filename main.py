@@ -45,49 +45,61 @@ class TaskCommands(commands.Cog):
                     await interaction.response.send_message(f"Error creating task.")
                     print(await response.text())
 
-    # /viewtasks
     @app_commands.command(name='viewtasks', description='View your tasks')
     async def view_tasks(self, interaction: discord.Interaction):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"http://localhost:8000/gettasks/{interaction.user.id}") as response:
                 if response.status == 200:
-
-                    # Get the tasks for the user as a json object
+                    # Get the tasks for the user as a JSON object
                     tasks = await response.json()
 
-                    # Create a string of the tasks to send to the user
-                    # ex: "1: Task Name - Description - Open
-                    task_list = "\n".join([f"{task['task_id']}: {task['title']} - {task['description']} - {task['status']}" for task in tasks])
-
                     # If no tasks are found, send a message saying No tasks found.
-                    if task_list == "":
-                        task_list = "No tasks found."
-                    await interaction.response.send_message(f"**Your Tasks:**\n**ID | Title | Description | Status**\n{task_list}")
+                    if not tasks:
+                        await interaction.response.send_message("No tasks found.")
+                        return
+
+                    # Create a formatted table for the tasks
+                    table_header = f"{'ID':<5} {'Title':<20} {'Description':<30} {'Priority':<10} {'Status':<10}\n"
+                    table_body = "\n".join(
+                        f"{task['task_id']:<5} {task['title']:<20} {task['description']:<30} {task['priority']:<10} {task['status']:<10}"
+                        for task in tasks
+                    )
+
+                    # Wrap the table in a code block for Discord
+                    formatted_table = f"```{table_header}{'-' * len(table_header)}\n{table_body}```"
+
+                    await interaction.response.send_message(f"**Your Tasks:**\n{formatted_table}")
                 else:
-                    await interaction.response.send_message(f"Error retrieving tasks.")
+                    await interaction.response.send_message("Error retrieving tasks.")
                     print(await response.text())
 
-    # /viewalltasks
-    # Manage Server permission required
     @app_commands.command(name='viewalltasks', description='View all tasks')
     @commands.has_permissions(manage_guild=True)
     async def view_all_tasks(self, interaction: discord.Interaction):
         async with aiohttp.ClientSession() as session:
             async with session.get("http://localhost:8000/gettasks") as response:
                 if response.status == 200:
-
-                    # Get the tasks for the bot as a json object
+                    # Get the tasks for the bot as a JSON object
                     tasks = await response.json()
 
-                    # Create a string of the tasks to send to the user
-                    task_list = "\n".join([f"{task['task_id']}: {task['title']} - {task['description']} - {task['status']}" for task in tasks])
-
                     # If no tasks are found, send a message saying No tasks found.
-                    if task_list == "":
-                        task_list = "No tasks found."
-                    await interaction.response.send_message(f"**All Tasks:**\n**ID | Title | Description | Status**\n{task_list}")
+                    if not tasks:
+                        await interaction.response.send_message("No tasks found.")
+                        return
+
+                    # Create a formatted table for the tasks
+                    table_header = f"{'ID':<5} {'Title':<20} {'Description':<30} {'Priority':<10} {'Status':<10}\n"
+                    table_body = "\n".join(
+                        f"{task['task_id']:<5} {task['title']:<20} {task['description']:<30} {task['priority']:<10} {task['status']:<10}"
+                        for task in tasks
+                    )
+
+                    # Wrap the table in a code block for Discord
+                    formatted_table = f"```{table_header}{'-' * len(table_header)}\n{table_body}```"
+
+                    await interaction.response.send_message(f"**All Tasks:**\n{formatted_table}")
                 else:
-                    await interaction.response.send_message(f"Error retrieving tasks.")
+                    await interaction.response.send_message("Error retrieving tasks.")
                     print(await response.text())
 
     # /updatetask <task_id> <title> <description> <due_date> <status>
